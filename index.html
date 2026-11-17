@@ -210,4 +210,361 @@ canvas{width:100%;height:150px;border:1px solid #223142;border-radius:10px;backg
     </div>
   </div>
 </section>
+<!-- ♥ BP LAB -->
+<section class="page" id="bp">
+  <div class="card">
+    <h2>♥ Blood Pressure Log</h2>
+    <div class="small">For general documentation only — not medical use.</div>
+    <div class="grid two" style="margin-top:12px">
+      <div class="field"><label>Systolic</label><input id="bpSys" type="number" min="60" max="250" placeholder="120"></div>
+      <div class="field"><label>Diastolic</label><input id="bpDia" type="number" min="40" max="160" placeholder="80"></div>
+      <div class="field"><label>Pulse</label><input id="bpPulse" type="number" min="40" max="200" placeholder="72"></div>
+      <div class="field"><label>Notes</label><input id="bpNote" placeholder="Morning / Resting etc."></div>
+    </div>
+    <div class="btnrow"><button class="btn" id="saveBp">💾 Save Reading</button><button class="btn secondary" id="clearBp">🗑 Clear Log</button></div>
+    <div style="margin-top:16px;overflow-x:auto">
+      <table><thead><tr><th>Time</th><th>BP</th><th>Pulse</th><th>Note</th></tr></thead><tbody id="bpBody"><tr><td colspan="4" class="empty">No readings yet</td></tr></tbody></table>
+    </div>
+  </div>
+</section>
+
+<!-- 🥗 FOOD -->
+<section class="page" id="food">
+  <div class="card">
+    <h2>🥗 Intake & Food Log</h2>
+    <div class="grid two" style="margin-top:12px">
+      <div class="field"><label>Item / Meal</label><input id="foodName" placeholder="e.g. Breakfast"></div>
+      <div class="field"><label>Time</label><input id="foodTime" type="time"></div>
+      <div class="field"><label>Amount</label><input id="foodAmt" placeholder="Portion / serving"></div>
+      <div class="field"><label>Type</label><select id="foodType">
+        <option>Meal</option><option>Snack</option><option>Fluid/Water</option><option>Supplement</option><option>Other</option>
+      </select></div>
+    </div>
+    <div class="field" style="margin-top:10px"><label>Notes</label><textarea id="foodNote" rows="2" placeholder="Details..."></textarea></div>
+    <div class="btnrow"><button class="btn" id="saveFood">💾 Save Entry</button><button class="btn secondary" id="clearFood">🗑 Clear Log</button></div>
+    <div style="margin-top:16px;overflow-x:auto">
+      <table><thead><tr><th>Time</th><th>Item</th><th>Amount</th><th>Type</th></tr></thead><tbody id="foodBody"><tr><td colspan="4" class="empty">No entries yet</td></tr></tbody></table>
+    </div>
+  </div>
+</section>
+
+<!-- 🔬 EVIDENCE -->
+<section class="page" id="evidence">
+  <div class="card">
+    <h2>🔬 Evidence & Reference Log</h2>
+    <div class="small">Store sources, links, and citations for your research.</div>
+    <div class="grid two" style="margin-top:12px">
+      <div class="field"><label>Title / Source</label><input id="evTitle" placeholder="Paper, article, or source name"></div>
+      <div class="field"><label>Date / Author</label><input id="evAuthor" placeholder="YYYY-MM-DD or Author"></div>
+      <div class="field" style="grid-column:span 2"><label>Link / Reference</label><input id="evLink" placeholder="URL or DOI"></div>
+    </div>
+    <div class="field" style="margin-top:10px"><label>Notes / Key Findings</label><textarea id="evNote" rows="3" placeholder="What makes this relevant..."></textarea></div>
+    <div class="btnrow"><button class="btn" id="saveEv">💾 Save Reference</button><button class="btn secondary" id="clearEv">🗑 Clear Log</button></div>
+    <div style="margin-top:16px">
+      <table><thead><tr><th>Source</th><th>Notes</th><th>Added</th></tr></thead><tbody id="evBody"><tr><td colspan="3" class="empty">No references saved</td></tr></tbody></table>
+    </div>
+  </div>
+</section>
+
+<!-- ⏱ CLOCK -->
+<section class="page" id="clock">
+  <div class="card">
+    <h2>⏱ Precision Clock & Timestamp</h2>
+    <div class="clockbox">
+      <div class="clock" id="bigClock">--:--:--</div>
+      <div style="font-size:12px;color:#8abdd6;margin-top:8px" id="fullDate">----/--/--</div>
+      <div class="field" style="margin-top:18px">
+        <label>Copy Format</label>
+        <input id="tsOutput" readonly>
+      </div>
+      <button class="btn" style="margin-top:12px" onclick="copyTimestamp()">📋 Copy Timestamp</button>
+    </div>
+    <div class="info" style="margin-top:16px">
+      <strong>Session ID:</strong> <span id="sessId">—</span><br>
+      <strong>UTC:</strong> <span id="utcTime">—</span>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+// === CENTRAL DATA STORE ===
+const Store = {
+  get(key, def) { try { return JSON.parse(localStorage.getItem(key)) } catch { return def } },
+  set(key, val) { localStorage.setItem(key, JSON.stringify(val)) },
+  now() { return new Date().toISOString() },
+  fmtDate(d) { return d ? new Date(d).toLocaleString() : '—' },
+  fmtLocal(d) { return d ? new Date(d).toISOString().slice(0,16) : '' }
+};
+
+let calcData = { mass:5, diluent:2, amount:250, unit:'mcg' };
+
+// === TABS ===
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.page).classList.add('active');
+  });
+});
+
+// === CALCULATOR ===
+function recalc(){
+  const mass=parseFloat(document.getElementById('mass').value)||0;
+  const diluent=parseFloat(document.getElementById('diluent').value)||0;
+  const amount=parseFloat(document.getElementById('amount').value)||0;
+  const unit=document.getElementById('amountUnit').value;
+
+  let amountMg=amount;
+  if(unit==='mcg') amountMg/=1000;
+  if(unit==='ng') amountMg/=1e6;
+
+  const conc=diluent>0?mass/diluent:0;
+  const vol=conc>0?amountMg/conc:0;
+  const units=vol*100;
+
+  document.getElementById('conc').textContent=conc.toFixed(3);
+  document.getElementById('concMcg').textContent=(conc*1000).toFixed(1);
+  document.getElementById('vol').textContent=vol.toFixed(4);
+  document.getElementById('units').textContent=units.toFixed(2);
+
+  calcData={mass,diluent,amount,unit,conc,vol,units};
+  document.getElementById('sharedCalc').textContent=`${conc.toFixed(3)} mg/mL → ${vol.toFixed(4)} mL needed`;
+  document.getElementById('syrVol').value=vol.toFixed(4);
+  updateSyringe();
+}
+
+['mass','diluent','amount','amountUnit'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',recalc);
+});
+document.getElementById('resetCalc').onclick=()=>{
+  document.getElementById('mass').value=5;
+  document.getElementById('diluent').value=2;
+  document.getElementById('amount').value=250;
+  document.getElementById('amountUnit').value='mcg';
+  recalc();
+};
+document.getElementById('saveCalc').onclick=()=>{
+  document.getElementById('trName').value=document.getElementById('calcLabel').value||'Calculation result';
+  document.getElementById('trAmount').value=calcData.vol.toFixed(4);
+  document.getElementById('trUnit').value='mL';
+  document.getElementById('trDate').value=new Date().toISOString().slice(0,16);
+  document.getElementById('trCat').value='calc';
+};
+
+// === SYRINGE ===
+function updateSyringe(){
+  const vol=parseFloat(document.getElementById('syrVol').value)||0;
+  document.getElementById('syrSlider').value=Math.min(vol,1);
+  document.getElementById('syrMl').textContent=vol.toFixed(3);
+  document.getElementById('syrUnits').textContent=(vol*100).toFixed(1);
+  document.getElementById('syrUl').textContent=Math.round(vol*1000);
+  document.getElementById('syrNote').textContent=vol<=1?'Within range':'Over range!';
+  document.getElementById('syrNote').style.color=vol<=1?'inherit':'var(--red)';
+}
+document.getElementById('syrVol').addEventListener('input',e=>{
+  document.getElementById('syrSlider').value=Math.min(parseFloat(e.target.value)||0,1);
+  updateSyringe();
+});
+document.getElementById('syrSlider').addEventListener('input',e=>{
+  document.getElementById('syrVol').value=parseFloat(e.target.value).toFixed(4);
+  updateSyringe();
+});
+document.getElementById('useCalcVol').onclick=()=>{
+  document.getElementById('syrVol').value=calcData.vol.toFixed(4);
+  updateSyringe();
+};
+
+// === TRACKER ===
+function loadRecords(){
+  const recs=Store.get('trackerRecs',[]);
+  const tbody=document.getElementById('recordsBody');
+  if(!recs.length){
+    tbody.innerHTML='<tr><td colspan="4" class="empty">No records yet — save your first entry above</td></tr>';
+    return;
+  }
+  tbody.innerHTML=recs.map((r,i)=>`
+    <tr>
+      <td style="font-size:10px">${new Date(r.time).toLocaleString()}</td>
+      <td>${r.label||'—'}</td>
+      <td>${r.value||'—'} ${r.unit||''}</td>
+      <td><button class="btn secondary" style="padding:3px 6px;font-size:10px" onclick="delRec(${i})">🗑</button></td>
+    </tr>`).join('');
+}
+document.getElementById('saveRecord').onclick=()=>{
+  const recs=Store.get('trackerRecs',[]);
+  recs.push({
+    time:new Date().toISOString(),
+    label:document.getElementById('trName').value||'Untitled',
+    value:document.getElementById('trAmount').value,
+    unit:document.getElementById('trUnit').value,
+    batch:document.getElementById('trBatch').value,
+    cat:document.getElementById('trCat').value,
+    notes:document.getElementById('trNotes').value
+  });
+  Store.set('trackerRecs',recs);
+  loadRecords();
+  document.getElementById('trackerNow').textContent='Last saved: '+new Date().toLocaleTimeString();
+};
+document.getElementById('clearRecords').onclick=()=>{
+  if(confirm('Clear all tracker records?')){
+    Store.set('trackerRecs',[]);
+    loadRecords();
+  }
+};
+document.getElementById('exportCsv').onclick=()=>{
+  const recs=Store.get('trackerRecs',[]);
+  if(!recs.length) return alert('No data to export');
+  const csv='Timestamp,Label,Value,Unit,Batch,Category,Notes\n'+
+    recs.map(r=>`${r.time},"${r.label||''}","${r.value||''}","${r.unit||''}","${r.batch||''}","${r.cat||''}","${(r.notes||'').replace(/"/g,'""')}"`).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='helix-sync-tracker-'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+};
+window.delRec=function(i){
+  const recs=Store.get('trackerRecs',[]);
+  recs.splice(i,1);
+  Store.set('trackerRecs',recs);
+  loadRecords();
+};
+
+// === BP LOG ===
+function loadBp(){
+  const list=Store.get('bpLog',[]);
+  const tbody=document.getElementById('bpBody');
+  if(!list.length){
+    tbody.innerHTML='<tr><td colspan="4" class="empty">No readings yet</td></tr>';
+    return;
+  }
+  tbody.innerHTML=list.map(r=>`
+    <tr>
+      <td style="font-size:10px">${new Date(r.time).toLocaleString()}</td>
+      <td><strong>${r.sys}/${r.dia}</strong></td>
+      <td>${r.pulse||'—'}</td>
+      <td>${r.note||''}</td>
+    </tr>`).join('');
+}
+document.getElementById('saveBp').onclick=()=>{
+  const list=Store.get('bpLog',[]);
+  list.unshift({
+    time:new Date().toISOString(),
+    sys:document.getElementById('bpSys').value,
+    dia:document.getElementById('bpDia').value,
+    pulse:document.getElementById('bpPulse').value,
+    note:document.getElementById('bpNote').value
+  });
+  Store.set('bpLog',list);
+  loadBp();
+  document.getElementById('bpSys').value='';
+  document.getElementById('bpDia').value='';
+  document.getElementById('bpPulse').value='';
+  document.getElementById('bpNote').value='';
+};
+document.getElementById('clearBp').onclick=()=>{
+  if(confirm('Clear all BP readings?')){ Store.set('bpLog',[]); loadBp(); }
+};
+
+// === FOOD LOG ===
+function loadFood(){
+  const list=Store.get('foodLog',[]);
+  const tbody=document.getElementById('foodBody');
+  if(!list.length){
+    tbody.innerHTML='<tr><td colspan="4" class="empty">No entries yet</td></tr>';
+    return;
+  }
+  tbody.innerHTML=list.map(r=>`
+    <tr>
+      <td style="font-size:10px">${new Date(r.time).toLocaleString()}</td>
+      <td>${r.name||'—'}</td>
+      <td>${r.amt||'—'}</td>
+      <td>${r.type||''}</td>
+    </tr>`).join('');
+}
+document.getElementById('saveFood').onclick=()=>{
+  const list=Store.get('foodLog',[]);
+  list.unshift({
+    time:new Date().toISOString(),
+    name:document.getElementById('foodName').value,
+    amt:document.getElementById('foodAmt').value,
+    type:document.getElementById('foodType').value,
+    note:document.getElementById('foodNote').value
+  });
+  Store.set('foodLog',list);
+  loadFood();
+  document.getElementById('foodName').value='';
+  document.getElementById('foodAmt').value='';
+  document.getElementById('foodNote').value='';
+};
+document.getElementById('clearFood').onclick=()=>{
+  if(confirm('Clear food log?')){ Store.set('foodLog',[]); loadFood(); }
+};
+
+// === EVIDENCE LOG ===
+function loadEv(){
+  const list=Store.get('evLog',[]);
+  const tbody=document.getElementById('evBody');
+  if(!list.length){
+    tbody.innerHTML='<tr><td colspan="3" class="empty">No references saved</td></tr>';
+    return;
+  }
+  tbody.innerHTML=list.map(r=>`
+    <tr>
+      <td><strong>${r.title||'Untitled'}</strong><br><small>${r.author||''}</small></td>
+      <td style="font-size:11px">${r.note||''}${r.link?`<br><a href="${r.link}" target="_blank" style="color:var(--cyan)">→ Open</a>`:''}</td>
+      <td style="font-size:10px">${new Date(r.time).toLocaleDateString()}</td>
+    </tr>`).join('');
+}
+document.getElementById('saveEv').onclick=()=>{
+  const list=Store.get('evLog',[]);
+  list.unshift({
+    time:new Date().toISOString(),
+    title:document.getElementById('evTitle').value,
+    author:document.getElementById('evAuthor').value,
+    link:document.getElementById('evLink').value,
+    note:document.getElementById('evNote').value
+  });
+  Store.set('evLog',list);
+  loadEv();
+  document.getElementById('evTitle').value='';
+  document.getElementById('evAuthor').value='';
+  document.getElementById('evLink').value='';
+  document.getElementById('evNote').value='';
+};
+document.getElementById('clearEv').onclick=()=>{
+  if(confirm('Clear all references?')){ Store.set('evLog',[]); loadEv(); }
+};
+
+// === CLOCK ===
+function updateClock(){
+  const now=new Date();
+  document.getElementById('bigClock').textContent=now.toLocaleTimeString();
+  document.getElementById('fullDate').textContent=now.toLocaleDateString(undefined,{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('topClock').textContent=now.toLocaleTimeString();
+  document.getElementById('tsOutput').value=now.toISOString();
+  document.getElementById('utcTime').textContent=now.toUTCString();
+  const sess=now.toISOString().slice(0,10).replace(/-/g,'');
+  document.getElementById('sessId').textContent=sess;
+  document.getElementById('sessionRef').textContent='ID: '+sess;
+  document.getElementById('currentSession').value='Research Session — '+now.toISOString().slice(0,10);
+}
+window.copyTimestamp=function(){
+  const el=document.getElementById('tsOutput');
+  el.select();
+  document.execCommand('copy');
+  alert('Timestamp copied!');
+};
+setInterval(updateClock,1000);
+
+// === INIT ===
+recalc();
+loadRecords();
+loadBp();
+loadFood();
+loadEv();
+updateClock();
+document.getElementById('trDate').
+
 
