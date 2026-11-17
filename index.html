@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#07111c">
+<title>HELIX SYNC — Research in Sync</title>
+<style>
+:root{--bg:#07111c;--panel:#0d1723;--line:#1c2b3a;--text:#e9f2fb;--muted:#8da4ba;--cyan:#08b9ef;--cyan2:#087eaa;--red:#ff745f;--green:#31e5a2;--radius:17px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{margin:0;background:radial-gradient(ellipse at 80% 0%,#082433 0,#07111c 48%);color:var(--text);font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.wrap{max-width:1100px;margin:auto;padding:14px 14px 44px}
+.hero{border:1px solid var(--line);border-radius:18px;padding:20px;background:linear-gradient(110deg,#0a1420,#081c2a);margin-bottom:16px}
+.brandrow{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.logomark{width:52px;height:52px;border:2px solid var(--cyan2);border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,#0a1a2c,#052233)}
+.logomark svg{width:32px;height:32px;stroke:var(--cyan);stroke-width:2.5;fill:none}
+.brand-top{display:flex;align-items:center;gap:8px}
+.brand{font-weight:800;letter-spacing:.12em;font-size:clamp(20px,4vw,30px);color:var(--cyan)}
+.brand span{color:var(--text)}
+.tagline{color:var(--muted);font-size:11px;letter-spacing:.18em;text-transform:uppercase;margin-top:4px}
+.sync-status{display:flex;align-items:center;gap:8px;margin-top:12px;padding:8px 12px;background:rgba(8,185,239,0.06);border:1px solid rgba(8,185,239,0.15);border-radius:10px;flex-wrap:wrap}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+.sync-text{font-size:11px;color:var(--cyan)}
+.session-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.session-row label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+.session-row input{flex:1;min-width:150px;background:#0a111b;border:1px solid #223243;border-radius:8px;padding:7px 10px;color:var(--text)}
+.notice{border:1px solid #542d35;background:#21141a;color:#ff9586;border-radius:999px;display:inline-block;padding:6px 12px;font-weight:700;font-size:10px;letter-spacing:.1em;margin:12px 0}
+.disclaimer{color:#9db0c4;font-size:11px;margin:0 0 16px;line-height:1.6}
+.tabs{display:flex;gap:6px;overflow:auto;padding:4px 0 12px;scrollbar-width:thin}
+.tab{white-space:nowrap;color:#9aafc2;background:#0d1723;border:1px solid var(--line);border-radius:11px;padding:10px 12px;font-size:12px;transition:all .2s}
+.tab.active{color:white;background:linear-gradient(120deg,#05aee5,#087eaa);border-color:#13c6ff;box-shadow:0 0 18px #00bfff35}
+.page{display:none}
+.page.active{display:block}
+.card{background:linear-gradient(145deg,#0e1824,#0b1420);border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin:10px 0 14px}
+.card h2{font-size:17px;margin:0 0 10px}
+.small{font-size:11px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:10px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase}
+.field input,.field select,.field textarea{width:100%;background:#0a111b;border:1px solid #223243;border-radius:10px;padding:10px;color:var(--text);outline:none}
+.btn{border:1px solid #16bce9;background:linear-gradient(110deg,#08b8ec,#0789bd);color:white;border-radius:10px;padding:10px 14px;font-weight:600;border:none}
+.btn.secondary{background:#101d2a;border:1px solid #26394a;color:#b8ccdd}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:14px 0}
+.stat{border:1px solid #233142;border-radius:12px;padding:12px;background:#0a121d}
+.stat .label{font-size:9px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
+.stat .value{font:600 18px ui-monospace,monospace;margin-top:4px}
+.warn{border:1px solid #68413a;background:#241a19;color:#ffb5a5;border-radius:10px;padding:12px;font-size:11px;margin-top:12px}
+.info{border:1px solid #1e3c50;background:#0b1a28;color:#a6cce0;border-radius:10px;padding:12px;font-size:11px;margin-top:12px}
+.link-notice{border-left:2px solid var(--cyan);padding:8px 12px;background:#0a1925;font-size:11px;margin:10px 0}
+.pill{display:inline-block;border:1px solid #294052;border-radius:999px;padding:3px 8px;font-size:10px;color:#a7c7da;margin:2px}
+.pill.sync{border-color:#08b9ef40;background:#08b9ef0f;color:#65d8ff}
+.empty{text-align:center;padding:30px 20px;color:#8197aa;border:1px dashed #2a3a4a;border-radius:10px;font-size:12px}
+.hidden{display:none!important}
+.syringes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:16px 0}
+.syringe-card{border:1px solid #243547;border-radius:14px;padding:12px 8px;text-align:center;background:#0a131e}
+.syringe-card.best{background:#05aee512;border-color:#21caff}
+.syringe-card .big{font:700 20px ui-monospace,monospace}
+.syringe-card .mini{font-size:10px;color:var(--muted)}
+.clock{font:clamp(26px,6vw,44px) ui-monospace,monospace}
+.clockbox{padding:20px;border-radius:14px;background:linear-gradient(120deg,#071a29,#0b2230);border:1px solid #183c50;text-align:center}
+table{border-collapse:collapse;width:100%;font-size:11px}
+th,td{text-align:left;padding:8px;border-bottom:1px solid #203041}
+th{color:#89a6bb;background:#0a131f}
+canvas{width:100%;height:150px;border:1px solid #223142;border-radius:10px;background:#0a121d;margin-top:10px}
+@media(max-width:650px){.grid,.grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:420px){.grid,.grid.two{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main class="wrap">
+<header class="hero">
+  <div class="brandrow">
+    <div class="logomark">
+      <svg viewBox="0 0 24 24"><path d="M7 2L12 12L17 22"/><path d="M17 2L12 12L7 22"/><circle cx="12" cy="12" r="2.5" fill="#08b9ef"/></svg>
+    </div>
+    <div>
+      <div class="brand-top">
+        <div class="brand">HELIX <span>SYNC</span></div>
+        <span class="pill sync" style="margin-left:8px">v2.0</span>
+      </div>
+      <div class="tagline">Research in Sync · Data in Control</div>
+    </div>
+  </div>
+  <div class="sync-status">
+    <span class="sync-dot"></span>
+    <span class="sync-text">🔄 Synced · Local Storage Active</span>
+    <span id="topClock" style="margin-left:auto;font-size:11px;color:var(--muted)">Loading…</span>
+  </div>
+</header>
+
+<div class="notice">● EDUCATIONAL USE ONLY — NOT MEDICAL EQUIPMENT</div>
+<p class="disclaimer">Helix Sync is for documentation and arithmetic only. Not a substitute for professional guidance. All data stored locally — export CSVs regularly.</p>
+
+<nav class="tabs" id="tabs">
+  <button class="tab active" data-page="calc">🧪 Calculator</button>
+  <button class="tab" data-page="syr">💉 Syringes</button>
+  <button class="tab" data-page="tracker">📋 Tracker</button>
+  <button class="tab" data-page="bp">♥ BP Lab</button>
+  <button class="tab" data-page="food">🥗 Food</button>
+  <button class="tab" data-page="evidence">🔬 Evidence</button>
+  <button class="tab" data-page="clock">⏱ Clock</button>
+</nav>
+
+<div class="card" style="padding:12px 16px;margin-top:0">
+  <div class="small">🔄 <strong>Central Data Store Active</strong></div>
+</div>
